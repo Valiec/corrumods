@@ -4,8 +4,8 @@ document.addEventListener('corru_act', (ev)=>{
 
     if(action.name == "unity") {
         if(!["god", "geli", "beautiful parasite", "council", "fairy", "isabel", "proxyfriend?"].includes(entity.name)) {       
-            let useCount = Number(check("unity") || 0)
-            change("unity",  ++useCount); //this is the only line I actually changed, the actual game has useCount++
+            let useCount = Number(check("unity_valfix") || 0) //uses separate flag to avoid doubled dialogue
+            change("unity_valfix",  ++useCount); //this is the only line I actually changed, the actual game has useCount++
 
             if(useCount == 5) {
                 chatter({actor: 'moth', text: "hey dude maybe take it easy with this unity thing", readout: true, delay: 12000})
