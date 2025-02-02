@@ -62,7 +62,7 @@ function overrideUncodeMemhole()
                         } else {
                             setTimeout(()=>{
                                 cutscene(false)
-                                moveTo(uncosmPath)
+                                moveTo(`https://corru.observer/local/uncosm/${value}/`) //use the original path
                             }, 4000)
                         }
                     })
@@ -110,9 +110,11 @@ function overridePageIfNeeded(pageRec)
 
 function overrideLoad(pageRec, renderOpts)
 {
+  let url = pageRec.responseURL;
   console.log("hi I hooked into this: pageRec is "+pageRec+", renderOpts are "+renderOpts);
   pageRec = overridePageIfNeeded(pageRec);
   doRender(pageRec, renderOpts);
+  history.pushState({}, "", url); //override the address bar
 }
 
 let doRender = swup.renderPage.bind(swup);
