@@ -102,6 +102,7 @@ function overridePageIfNeeded(pageRec)
         }
         request.send();
     }
+    request.responseURL = pageRec.responseURL; //fake the URL
     pageRec = swup.getPageData(request);
   }
   return pageRec;
