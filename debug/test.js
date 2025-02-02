@@ -124,7 +124,7 @@ swup.renderPage = overrideLoad.bind(swup);
 //testing both formats
 registerCustomPage("https://corru.observer/local/valiec", "https://corru.observer/local/ozo?force");
 registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
-registerCustomPage("/local/uncosm/silly", "https://valiec.github.io/corrumods/debug/hivekoa.html");
+registerCustomPage("/local/uncosm/silly/", "https://valiec.github.io/corrumods/debug/hivekoa.html");
 overrideUncodeMemhole();
 
 onload_custompage();
