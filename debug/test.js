@@ -60,10 +60,6 @@ function overrideUncodeMemhole()
     }
 }
 
-//testing both formats
-registerCustomPage("https://corru.observer/local/valiec", "https://corru.observer/local/ozo?force");
-registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
-
 function onload_custompage() {
   if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && window.location.href in customPages) //404 and custom page
   {
@@ -97,7 +93,13 @@ function overrideLoad(pageRec, renderOpts)
 let doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
 
-onload_custompage();
+
+//testing both formats
+registerCustomPage("https://corru.observer/local/valiec", "https://corru.observer/local/ozo?force");
+registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
+registerCustomPage("/local/uncosm/silly", "https://valiec.github.io/corrumods/debug/hivekoa.html");
 overrideUncodeMemhole();
+
+onload_custompage();
 
 
