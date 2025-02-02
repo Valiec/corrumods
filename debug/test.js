@@ -28,6 +28,7 @@ function onload_custompage() {
   if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && window.location.href in customPages) //404 and custom page
   {
     swup.loadPage({url: window.location.href}); //force swup load again to get custom page
+  }
 }
 
 function overridePageIfNeeded(pageRec)
