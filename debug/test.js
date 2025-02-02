@@ -127,9 +127,8 @@ registerCustomPage("/local/uncosm/silly/", "https://valiec.github.io/corrumods/d
 swup.on("pageLoaded", function() {
     if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
     {
-        document.getElementById('code').addEventListener('focus', function() { 
-            overrideUncodeMemhole();
-        });
+        let codeElement = document.getElementById('code');
+        codeElement.addEventListener('focus', overrideUncodeMemhole);
     }
 });
 
@@ -137,9 +136,8 @@ addEventListener("load", (event) => {
     onload_custompage();
     if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
     {
-        document.getElementById('code').addEventListener('focus', function() { 
-            overrideUncodeMemhole();
-        });
+        let codeElement = document.getElementById('code');
+        codeElement.addEventListener('focus', overrideUncodeMemhole);
     }
 });
 
