@@ -90,7 +90,7 @@ function overridePageIfNeeded(pageRec)
     else
     {
         request.open("get",customPages[pageRec.responseURL], false); //synchronous request for now
-        if(!(customPages[pageRec.responseURL].startsWith("https://corru.observer"))
+        if(!(customPages[pageRec.responseURL].startsWith("https://corru.observer")))
         {
             request.setRequestHeader("Content-Type", "text/plain");
         }
