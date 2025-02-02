@@ -20,6 +20,46 @@ function registerCustomPage(fakeURL, realURL)
     }
 }
 
+function overrideUncodeMemhole()
+{
+    if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
+    {
+        env.uncode["enter"] = ()=>{
+                let value = env.uncode.input.value.toLowerCase().replaceAll(".", "").replaceAll("/", "")
+                
+                if(value.length) {
+                    env.uncode.input.blur()
+                    cutscene(true)
+                    play('destabilize', 0.5)
+                    ratween(env.bgm, 0.1)
+                    content.classList.add('memorydive')
+        
+                    if(!check("hub__funfriend-ah1") && value == "recosm") {
+                        //fuck you lol
+                        location.href = `/img/sprites/obesk/larval/larval7.gif`
+                    }
+
+                    let uncosmPath = `https://corru.observer/local/uncosm/${value}/`;
+                    if(uncosmPath in customPages)
+                    {
+                        uncosmPath = customPages[uncosmPath]; //override the page
+                    }
+                    fetch(uncosmPath).then(resp=>{
+                        if(resp.status == 404){
+                            cutscene(false)
+                            startDialogue('wrong')
+                        } else {
+                            setTimeout(()=>{
+                                cutscene(false)
+                                moveTo(uncosmPath)
+                            }, 4000)
+                        }
+                    })
+                }
+            }
+    }
+}
+
 //testing both formats
 registerCustomPage("https://corru.observer/local/valiec", "https://corru.observer/local/ozo?force");
 registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
@@ -58,5 +98,6 @@ let doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
 
 onload_custompage();
+overrideUncodeMemhole();
 
 
