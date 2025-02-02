@@ -9,7 +9,7 @@ function overrideLoad(pageRec, renderOpts)
   doRender(pageRec, renderOpts);
 }
 
-doRender = swup.renderPage.bind(swup);
+let doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
 
 onload_debug();
