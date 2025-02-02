@@ -126,12 +126,13 @@ registerCustomPage("https://corru.observer/local/valiec", "https://corru.observe
 registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
 registerCustomPage("/local/uncosm/silly/", "https://valiec.github.io/corrumods/debug/hivekoa.html");
 
-swup.on('pageView', () => { 
+swup.on('contentReplaced', function() { 
     overrideUncodeMemhole();
 });
 
 addEventListener("load", (event) => {
-onload_custompage();
+    onload_custompage();
+    overrideUncodeMemhole();
 });
 
 
