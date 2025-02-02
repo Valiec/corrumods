@@ -37,15 +37,11 @@ function overridePageIfNeeded(pageRec)
   {
     request = new XMLHttpRequest();
     //add hardcoded custom pages here
-    request.open("get",customPages[pageRec.responseURL]);
+    request.open("get",customPages[pageRec.responseURL], false); //synchronous request for now
     Object.entries(swup.options["requestHeaders"]).forEach(([key, header]) => {
     	request.setRequestHeader(key, header);
     });
     request.send();
-    while(request.readyState < 4) //swup doesn't seem to wait until it's done, so wait here
-    {
-        //do nothing
-    }
     pageRec = swup.getPageData(request);
   }
   return pageRec;
