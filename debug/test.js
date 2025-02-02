@@ -33,8 +33,6 @@ function registerCustomPageHardcoded(fakeURL, pageContent)
 
 function overrideUncodeMemhole()
 {
-    if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
-    {
         env.uncode["enter"] = ()=>{
                 let value = env.uncode.input.value.toLowerCase().replaceAll(".", "").replaceAll("/", "")
                 
@@ -68,7 +66,6 @@ function overrideUncodeMemhole()
                     })
                 }
             }
-    }
 }
 
 function onload_custompage() {
@@ -126,10 +123,12 @@ registerCustomPage("https://corru.observer/local/valiec", "https://corru.observe
 registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
 registerCustomPage("/local/uncosm/silly/", "https://valiec.github.io/corrumods/debug/hivekoa.html");
 
-swup.on('pageLoaded', function() { 
-    overrideUncodeMemhole();
-});
-
+if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
+{
+    document.getElementById('code').addEventListener('focus', function() { 
+        overrideUncodeMemhole();
+    });
+}
 addEventListener("load", (event) => {
     onload_custompage();
     overrideUncodeMemhole();
