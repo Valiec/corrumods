@@ -4,7 +4,7 @@ function onload_debug() {
 }
 
 let doRender = swup.renderPage;
-swup.renderPage = function(s, p, o) { console.log("hi I hooked into this"); doRender(s, p, o); }
+swup.renderPage = function(p, o) { console.log("hi I hooked into this"); doRender(p, o); }
 
 //addEventListener("animation:out:end", function(a){ console.log("foo") })
 
