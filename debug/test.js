@@ -1,23 +1,34 @@
 customPages = {}
 
+customPagesHardcoded = {}
+
 function registerCustomPage(fakeURL, realURL)
 {
+    let key = fakeURL;
     if(fakeURL.startsWith("https://corru.observer")) //full URL
     {
-      customPages[fakeURL] = realURL;
+      key = fakeURL;
     }
     else if(fakeURL.startsWith("http://corru.observer")) //special case
     {
-      customPages[fakeURL.replace("http://", "https://")] = realURL;
+      key = fakeURL.replace("http://", "https://");
     }
     else if(fakeURL.startsWith("/")) //partial URL with leading slash (e.g. "/local/hub")
     {
-      customPages["https://corru.observer"+fakeURL] = realURL;
+      key = "https://corru.observer"+fakeURL;
     }
     else //assumed partial URL with no leading slash (e.g. "local/hub")
     {
-      customPages["https://corru.observer/"+fakeURL] = realURL;
+      key = "https://corru.observer/"+fakeURL;
     }
+    customPages[key] = realURL;
+    return key;
+}
+
+function registerCustomPageHardcoded(fakeURL, pageContent)
+{
+    let key = registerCustomPage(fakeURL, fakeURL);
+    customPagesHardcoded[key] = pageContent;
 }
 
 function overrideUncodeMemhole()
@@ -72,12 +83,25 @@ function overridePageIfNeeded(pageRec)
   if(pageRec.title == "!!__ERROR::UNPROCESSABLE__!!" && pageRec.responseURL in customPages) //404 and custom page
   {
     request = new XMLHttpRequest();
-    //add hardcoded custom pages here
-    request.open("get",customPages[pageRec.responseURL], false); //synchronous request for now
-    Object.entries(swup.options["requestHeaders"]).forEach(([key, header]) => {
-    	request.setRequestHeader(key, header);
-    });
-    request.send();
+    if(customPages[pageRec.responseURL] == pageRec.responseURL && pageRec.responseURL in customPagesHardcoded)
+    {
+        request.responseText = customPagesHardcoded[pageRec.responseURL];
+    }
+    else
+    {
+        request.open("get",customPages[pageRec.responseURL], false); //synchronous request for now
+        if(!(customPages[pageRec.responseURL].startsWith("https://corru.observer"))
+        {
+            request.setRequestHeader("Content-Type", "text/plain");
+        }
+        else
+        {
+            Object.entries(swup.options["requestHeaders"]).forEach(([key, header]) => {
+            	request.setRequestHeader(key, header);
+            });
+        }
+        request.send();
+    }
     pageRec = swup.getPageData(request);
   }
   return pageRec;
