@@ -3,10 +3,14 @@ function onload_debug() {
   swup.loadPage({url: "https://corru.observer/local/ocean/ship/interview?force"}); //debug, should send you to the interview instead of every other page
 }
 
-let doRender = swup.renderPage;
-swup.renderPage = function(p, o) { console.log("hi I hooked into this"); doRender(p, o); }
+function overrideLoad(pageRec, renderOpts)
+{
+  console.log("hi I hooked into this: pageRec is "+pageRec+", renderOpts are "+renderOpts);
+  doRender(pageRec, renderOpts);
+}
 
-//addEventListener("animation:out:end", function(a){ console.log("foo") })
+doRender = swup.renderPage.bind(swup);
+swup.renderPage = overrideLoad.bind(swup);
 
 onload_debug();
 
