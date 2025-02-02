@@ -5,7 +5,7 @@ function onload_debug() {
 
 function overridePageIfNeeded(pageRec)
 {
-  if(document.title == "!!__ERROR::UNPROCESSABLE__!!") //404
+  if(pageRec.title == "!!__ERROR::UNPROCESSABLE__!!") //404
   {
     request = new XMLHttpRequest();
     request.open("get","https://corru.observer/local/ozo?force"); //different so I can tell which is which
