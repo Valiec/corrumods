@@ -50,7 +50,7 @@ function overridePageIfNeeded(pageRec)
 function overrideLoad(pageRec, renderOpts)
 {
   console.log("hi I hooked into this: pageRec is "+pageRec+", renderOpts are "+renderOpts);
-  pageRec = overridePageIfNeeded();
+  pageRec = overridePageIfNeeded(pageRec);
   doRender(pageRec, renderOpts);
 }
 
