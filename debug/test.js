@@ -21,8 +21,8 @@ function registerCustomPage(fakeURL, realURL)
 }
 
 //testing both formats
-registerCustomPage("https://corru.observer/local/valiec", "https://corru.observer/local/ozo");
-registerCustomPage("/local/idril", "https://corru.observer/local/depths");
+registerCustomPage("https://corru.observer/local/valiec", "https://corru.observer/local/ozo?force");
+registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
 
 function onload_custompage() {
   if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && window.location.href in customPages) //404 and custom page
