@@ -42,7 +42,7 @@ function overridePageIfNeeded(pageRec)
     	request.setRequestHeader(key, header);
     });
     request.send();
-    while(request.readyState != "DONE") //swup doesn't seem to wait until it's done, so wait here
+    while(request.readyState < 4) //swup doesn't seem to wait until it's done, so wait here
     {
         //do nothing
     }
