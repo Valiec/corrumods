@@ -123,15 +123,24 @@ registerCustomPage("https://corru.observer/local/valiec", "https://corru.observe
 registerCustomPage("/local/idril", "https://corru.observer/local/depths?force");
 registerCustomPage("/local/uncosm/silly/", "https://valiec.github.io/corrumods/debug/hivekoa.html");
 
-if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
-{
-    document.getElementById('code').addEventListener('focus', function() { 
-        overrideUncodeMemhole();
-    });
-}
+
+swup.on("pageLoaded", function() {
+    if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
+    {
+        document.getElementById('code').addEventListener('focus', function() { 
+            overrideUncodeMemhole();
+        });
+    }
+});
+
 addEventListener("load", (event) => {
     onload_custompage();
-    overrideUncodeMemhole();
+    if(window.location.href == "https://corru.observer/local/uncosm/where/") //memhole
+    {
+        document.getElementById('code').addEventListener('focus', function() { 
+            overrideUncodeMemhole();
+        });
+    }
 });
 
 
