@@ -1,14 +1,42 @@
-function onload_debug() {
-  console.log('loaded');
-  swup.loadPage({url: "https://corru.observer/local/ocean/ship/interview?force"}); //debug, should send you to the interview instead of every other page
+customPages = {}
+
+function registerCustomPage(fakeURL, realURL)
+{
+    if(fakeURL.startsWith("https://corru.observer")) //full URL
+    {
+      customPages[fakeURL] = realURL;
+    }
+    else if(fakeURL.startsWith("http://corru.observer")) //special case
+    {
+      customPages[fakeURL.replace("http://", "https://")] = realURL;
+    }
+    else if(fakeURL.startsWith("/")) //partial URL with leading slash (e.g. "/local/hub")
+    {
+      customPages["https://corru.observer"+fakeURL] = realURL;
+    }
+    else //assumed partial URL with no leading slash (e.g. "local/hub")
+    {
+      customPages["https://corru.observer/"+fakeURL] = realURL;
+    }
+}
+
+//testing both formats
+registerCustomPage("https://corru.observer/local/valiec", "https://corru.observer/local/ozo");
+registerCustomPage("/local/idril", "https://corru.observer/local/depths");
+
+function onload_custompage() {
+  if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && window.location.href in customPages) //404 and custom page
+  {
+    swup.loadPage({url: window.location.href}); //force swup load again to get custom page
 }
 
 function overridePageIfNeeded(pageRec)
 {
-  if(pageRec.title == "!!__ERROR::UNPROCESSABLE__!!") //404
+  if(pageRec.title == "!!__ERROR::UNPROCESSABLE__!!" && pageRec.responseURL in customPages) //404 and custom page
   {
     request = new XMLHttpRequest();
-    request.open("get","https://corru.observer/local/ozo?force"); //different so I can tell which is which
+    //add hardcoded custom pages here
+    request.open("get",customPages[pageRec.responseURL]);
     Object.entries(swup.options["requestHeaders"]).forEach(([key, header]) => {
     	request.setRequestHeader(key, header);
     });
@@ -28,6 +56,6 @@ function overrideLoad(pageRec, renderOpts)
 let doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
 
-//onload_debug();
+onload_custompage();
 
 
