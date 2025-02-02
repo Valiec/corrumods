@@ -2,7 +2,7 @@ function onload() {
   console.log('loaded');
 }
 
-if(Document.readyState == 'complete')
+if(document.readyState == 'complete')
 {
    onload(); 
 }
