@@ -1,3 +1,8 @@
-document.addEventListener('load', function() {
-  console.log('DOM loaded');
-});
+function onload() {
+  console.log('loaded');
+}
+
+if(Document.readyState == 'complete')
+{
+   onload(); 
+}
