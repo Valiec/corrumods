@@ -161,8 +161,78 @@ function moveTo(destUrl, closeMui = true){
         MUI("deprohibit")
     }
     env.visitingCustomPage = false; //reset this
-    swup.loadPage({url: destUrl})
+    const pageKey = urlToKey(destUrl);
+    if(pageKey in customPages)
+    {
+        if(pageKey in customPagesHardcoded)
+        {
+            moveToHardcoded(customPagesHardcoded[pageKey], destUrl);
+        }
+        else
+        {
+            moveToCustom(customPages[pageKey], destUrl);
+        }
+    }
+    else
+    {
+        swup.loadPage({url: destUrl})
+    }
     if(body.classList.contains('in-dialogue')) endDialogue()
+}
+
+function moveToCustom(destUrl, fakeUrl){
+    env.visitingCustomPage = true;
+    //swup.loadPage({url: destUrl})
+    let request = new XMLHttpRequest();
+    let pageKey = urlToKey(fakeUrl);
+    request.open("get",destUrl, false); //synchronous request for now
+    if(isCrossOrigin(destUrl))
+    {
+        request.setRequestHeader("Content-Type", "text/plain"); //make this a "simple request" to stop CORS preflight
+    }
+    else
+    {
+        Object.entries(swup.options["requestHeaders"]).forEach(([key, header]) => {
+            request.setRequestHeader(key, header);
+        });
+    }
+    request.send();
+    request.responseURL = fakeUrl; //fake the URL
+    let pageRec = swup.getPageData(request);
+    fakePageTransition(pageRec, fakeUrl);
+    //window.location.href = fakeUrl;
+    //history.pushState({}, "", fakeUrl); //override the address bar
+    
+}
+
+
+function moveToHardcoded(pageContent, fakeUrl){
+    env.visitingCustomPage = true;
+    let request = {}
+    request.responseURL = fakeUrl; //fake the URL
+    request.responseText = customPagesHardcoded[pageKey];
+    let pageRec = swup.getPageData(request);
+    fakePageTransition(pageRec, fakeUrl);
+    //history.pushState({}, "", fakeUrl); //override the address bar
+    
+}
+
+const doPageTransition =  function(pageRec, fakeUrl) {
+    doRender(pageRec, {});
+    history.pushState({}, "", fakeUrl); //override the address bar
+};
+
+function fakePageTransition(pageRec, fakeUrl)
+{
+
+    const transitionCallback = function(event)
+    {
+        doPageTransition(pageRec, fakeUrl);
+        removeEventListener("transitionend", transitionCallback);
+    };
+
+    page.onLeaving();
+    addEventListener("transitionend", transitionCallback);
 }
 
 function overrideLoad(pageRec, renderOpts)
@@ -184,13 +254,11 @@ registerCustomPage("/local/uncosm/silly/", "https://valiec.github.io/corrumods/d
 
 
 document.addEventListener('corru_entered', function() {
-    console.log("loaded, href is: "+window.location.href);
     if(new URL(window.location.href).pathname == "/local/uncosm/where/") //memhole
     {
-        console.log("adding handler");
+        console.log("adding uncode replacement handler");
         let codeElement = document.getElementById('code');
         codeElement.addEventListener('focus', overrideUncodeMemhole);
-        console.log("handler added");
     }
 });
 
