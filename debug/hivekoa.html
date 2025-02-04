@@ -80,24 +80,24 @@
 						updatePreferenceAttributes()
 
 
-			env.dialogues["silly"] = generateDialogueObject(`
-			start
-			sys
-			NOTICE::'memory stream located'
+env.dialogues["silly"] = generateDialogueObject(`
+start
+	sys
+		NOTICE::'memory stream located'
 
-			sourceless
-			hi vekoa
+	sourceless
+		hi vekoa
 
-			sourceless
-			this is working
+	sourceless
+		this is working
 
-			sys
-			NOTICE::'memory stream terminated'
+	sys
+		NOTICE::'memory stream terminated'
 
-			RESPONSES::sys
-			return<+>END
-			    EXEC::moveTo("/local/depths/")
-			`)
+	RESPONSES::sys
+		return<+>END
+		    EXEC::moveTo("/local/depths/")
+`)
 
 
 						
