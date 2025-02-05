@@ -5,6 +5,8 @@ if(typeof customPages === 'undefined')
     customPagesHardcoded = {}
 }
 
+
+//internal, converts a URL to a page key (relative path)
 function urlToKey(url)
 {
 
@@ -41,12 +43,14 @@ function urlToKey(url)
 
 }
 
+//internal, converts a page key (relative path) to a full URL
 function keyToUrl(key)
 {
     return new URL(window.location.href).origin+key;
 }
 
 //library method, registers a custom page
+//if fakeURL already registered, do nothing unless force=true
 function registerCustomPage(fakeURL, realURL, force=false)
 {
     let key = urlToKey(fakeURL);
@@ -59,9 +63,10 @@ function registerCustomPage(fakeURL, realURL, force=false)
 }
 
 //library method, registers a hardcoded custom page (i.e. the page content is in the mod, not a separate file)
+//if fakeURL already registered, do nothing unless force=true
 function registerCustomPageHardcoded(fakeURL, pageContent, force=false)
 {
-    let key = registerCustomPage(fakeURL, "", force);
+    let key = registerCustomPage(fakeURL, "", force); //mapping to empty string = flag for hardcoded page
     customPagesHardcoded[key] = pageContent;
 }
 
@@ -105,17 +110,17 @@ function overrideUncodeMemhole()
             }
 }
 
-//force-reload 404 pages if the URL is registered as a custom page
-function onload_custompage() {
+//internal, force-reload 404 pages if the URL is registered as a custom page
+function onloadCustomPage() {
     //if this has the title of the 404 page, is registered as a custom page key, and is *not* itself the result of visiting a custom page
     //the 3rd condition is to prevent reload loops if a custom page is named !!__ERROR::UNPROCESSABLE__!!
-    console.log("a");
-    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey( window.location.href) in customPages && !env.visitingCustomPage) //404 and custom page
+    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey(window.location.href) in customPages && !env.visitingCustomPage) //404 and custom page
     {
         moveTo(window.location.href, closeMui=false, quick=true); //force load again to get custom page
     }
 }
 
+//internal, will this "redirect" be cross-origin (most often, is the destination not on corru.observer)
 function isCrossOrigin(destURL)
 {
     const srcOrigin = new URL(window.location.href).origin;
@@ -123,39 +128,9 @@ function isCrossOrigin(destURL)
     return srcOrigin != destOrigin;
 }
 
-function overridePageIfNeeded(pageRec)
-{
-  if(urlToKey(pageRec.responseURL) in customPages) //custom page
-  {
-    env.visitingCustomPage = true;
-    let request = new XMLHttpRequest();
-    let pageKey = urlToKey(pageRec.responseURL);
-    if(customPages[pageKey] == "" && pageKey in customPagesHardcoded)
-    {
-        request.responseText = customPagesHardcoded[pageKey];
-    }
-    else
-    {
-        request.open("get",customPages[pageKey], false); //synchronous request for now
-        if(isCrossOrigin(customPages[pageKey]))
-        {
-            request.setRequestHeader("Content-Type", "text/plain"); //make this a "simple request" to stop CORS preflight
-        }
-        else
-        {
-            Object.entries(swup.options["requestHeaders"]).forEach(([key, header]) => {
-            	request.setRequestHeader(key, header);
-            });
-        }
-        request.send();
-    }
-    request.responseURL = pageRec.responseURL; //fake the URL
-    pageRec = swup.getPageData(request);
-  }
-  return pageRec;
-}
 
-//overriding moveTo
+//internal, overriding moveTo to handle custom pages
+//quick is intended for skipping as much of the page transition as possible for the onload redirect
 function moveTo(destUrl, closeMui = true, quick=false){
     if(closeMui) {
         MUI("off")
@@ -178,15 +153,12 @@ function moveTo(destUrl, closeMui = true, quick=false){
     {
         swup.loadPage({url: destUrl})
     }
-    if(!quick)
-    {
-        if(body.classList.contains('in-dialogue')) endDialogue()
-    }
+    if(body.classList.contains('in-dialogue')) endDialogue()
 }
 
+//internal, moveTo helper for custom pages at distinct URLs
 function moveToCustom(destUrl, fakeUrl, quick){
     env.visitingCustomPage = true;
-    //swup.loadPage({url: destUrl})
     let request = new XMLHttpRequest();
     let pageKey = urlToKey(fakeUrl);
     request.open("get",destUrl, false); //synchronous request for now
@@ -204,12 +176,11 @@ function moveToCustom(destUrl, fakeUrl, quick){
     request.responseURL = fakeUrl; //fake the URL
     let pageRec = swup.getPageData(request);
     fakePageTransition(pageRec, fakeUrl, quick);
-    //window.location.href = fakeUrl;
-    //history.pushState({}, "", fakeUrl); //override the address bar
     
 }
 
 
+//internal, moveTo helper for custom hardcoded (embedded in the JS) pages
 function moveToHardcoded(pageContent, fakeUrl, quick){
     env.visitingCustomPage = true;
     let request = {}
@@ -217,15 +188,17 @@ function moveToHardcoded(pageContent, fakeUrl, quick){
     request.responseText = pageContent;
     let pageRec = swup.getPageData(request);
     fakePageTransition(pageRec, fakeUrl, quick);
-    //history.pushState({}, "", fakeUrl); //override the address bar
     
 }
 
+//internal, helper for fakePageTransition
 const doPageTransition =  function(pageRec, fakeUrl) {
     doRender(pageRec, {});
     history.pushState({}, "", fakeUrl); //override the address bar
 };
 
+
+//internal, fakes a page transition without actually invoking swup (to avoid spurious requests)
 function fakePageTransition(pageRec, fakeUrl, quick)
 {
 
@@ -249,6 +222,41 @@ function fakePageTransition(pageRec, fakeUrl, quick)
     }
 }
 
+//internal, helper for overrideLoad
+function overridePageIfNeeded(pageRec)
+{
+  if(urlToKey(pageRec.responseURL) in customPages) //custom page
+  {
+    env.visitingCustomPage = true;
+    let request = new XMLHttpRequest();
+    let pageKey = urlToKey(pageRec.responseURL);
+    if(customPages[pageKey] == "" && pageKey in customPagesHardcoded)
+    {
+        request.responseText = customPagesHardcoded[pageKey];
+    }
+    else
+    {
+        request.open("get",customPages[pageKey], false); //synchronous request for now
+        if(isCrossOrigin(customPages[pageKey]))
+        {
+            request.setRequestHeader("Content-Type", "text/plain"); //make this a "simple request" to stop CORS preflight
+        }
+        else
+        {
+            Object.entries(swup.options["requestHeaders"]).forEach(([key, header]) => {
+                request.setRequestHeader(key, header);
+            });
+        }
+        request.send();
+    }
+    request.responseURL = pageRec.responseURL; //fake the URL
+    pageRec = swup.getPageData(request);
+  }
+  return pageRec;
+}
+
+//internal, override renderPage
+//fallback if something bypasses moveTo somewhere, will generate a spurious request to the original URL
 function overrideLoad(pageRec, renderOpts)
 {
   let url = pageRec.responseURL;
@@ -257,10 +265,13 @@ function overrideLoad(pageRec, renderOpts)
   history.pushState({}, "", url); //override the address bar
 }
 
+
+//override renderPage in swup
 let doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
 
 
+//add uncode replacement handler on memhole textbox focused
 document.addEventListener('corru_entered', function() {
     if(new URL(window.location.href).pathname == "/local/uncosm/where/") //memhole
     {
@@ -270,8 +281,9 @@ document.addEventListener('corru_entered', function() {
     }
 });
 
+//onload event to handle going to pages directly
 addEventListener("load", (event) => {
-    onload_custompage();
+    onloadCustomPage();
 });
 
 
