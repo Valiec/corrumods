@@ -22,7 +22,7 @@ function Mod(id)
     this.id = id;
     if(id in mods)
     {
-        throw "mod already registered with id '"+id+"'!";
+        printError("mod already registered with id '"+id+"'!");
     }
     mods[id] = this;
 }
@@ -42,7 +42,7 @@ Mod.prototype.registerCustomPage = function(fakeURL, realURL, force=false)
     let pageKey = urlToKey(fakeURL);
     if(pageKey in customPagesToMods && customPagesToMods[pageKey] != this.id)
     {
-        throw `mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`;
+        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`);
     }
     customPagesToMods[pageKey] = this.id;
     registerCustomPage(fakeURL, realURL, force);   
@@ -53,7 +53,7 @@ Mod.prototype.registerCustomPageHardcoded = function(fakeURL, pageContent, force
     let pageKey = urlToKey(fakeURL);
     if(pageKey in customPagesToMods && customPagesToMods[pageKey] != this.id)
     {
-        throw `mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`;
+        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`);
     }
     customPagesToMods[pageKey] = this.id;
     registerCustomPageHardcoded(fakeURL, pageContent, force);   
