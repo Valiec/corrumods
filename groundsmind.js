@@ -109,6 +109,7 @@ function overrideUncodeMemhole()
 function onload_custompage() {
     //if this has the title of the 404 page, is registered as a custom page key, and is *not* itself the result of visiting a custom page
     //the 3rd condition is to prevent reload loops if a custom page is named !!__ERROR::UNPROCESSABLE__!!
+    console.log("a");
     if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey( window.location.href) in customPages && !env.visitingCustomPage) //404 and custom page
     {
         moveTo(window.location.href, closeMui=false, quick=true); //force load again to get custom page
@@ -202,7 +203,7 @@ function moveToCustom(destUrl, fakeUrl, quick){
     request.send();
     request.responseURL = fakeUrl; //fake the URL
     let pageRec = swup.getPageData(request);
-    fakePageTransition(pageRec, fakeUrl);
+    fakePageTransition(pageRec, fakeUrl, quick);
     //window.location.href = fakeUrl;
     //history.pushState({}, "", fakeUrl); //override the address bar
     
@@ -213,9 +214,9 @@ function moveToHardcoded(pageContent, fakeUrl, quick){
     env.visitingCustomPage = true;
     let request = {}
     request.responseURL = fakeUrl; //fake the URL
-    request.responseText = customPagesHardcoded[pageKey];
+    request.responseText = pageContent;
     let pageRec = swup.getPageData(request);
-    fakePageTransition(pageRec, fakeUrl, doStatic);
+    fakePageTransition(pageRec, fakeUrl, quick);
     //history.pushState({}, "", fakeUrl); //override the address bar
     
 }
