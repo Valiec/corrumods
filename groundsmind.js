@@ -2,9 +2,62 @@
 if(typeof customPages === 'undefined')
 {
     customPages = {}
+    customPagesToMods = {}
     customPagesHardcoded = {}
+    mods = {}
 }
 
+function modCheck(id, inputKey, inputValue = null)
+{
+    return check("grmmod_"+id+"_"+inputKey, inputValue);
+}
+
+function modChange(id, key, value)
+{
+    return change("grmmod_"+id+"_"+key, value);
+}
+
+function Mod(id)
+{
+    this.id = id;
+    if(id in mods)
+    {
+        throw "mod already registered with id '"+id+"'!";
+    }
+    mods[id] = this;
+}
+
+Mod.prototype.check = function(inputKey, inputValue = null)
+{
+    return modCheck(this.id, inputKey, inputValue);
+}
+
+Mod.prototype.change = function(key, value)
+{
+    return modChange(this.id, key, value);
+}
+
+Mod.prototype.registerCustomPage = function(fakeURL, realURL, force=false)
+{
+    let pageKey = urlToKey(fakeURL);
+    if(pageKey in customPagesToMods && customPagesToMods[pageKey] != this.id)
+    {
+        throw `mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`;
+    }
+    customPagesToMods[pageKey] = this.id;
+    registerCustomPage(fakeURL, realURL, force);   
+}
+
+Mod.prototype.registerCustomPageHardcoded = function(fakeURL, pageContent, force=false)
+{
+    let pageKey = urlToKey(fakeURL);
+    if(pageKey in customPagesToMods && customPagesToMods[pageKey] != this.id)
+    {
+        throw `mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`;
+    }
+    customPagesToMods[pageKey] = this.id;
+    registerCustomPageHardcoded(fakeURL, pageContent, force);   
+}
 
 //internal, converts a URL to a page key (relative path)
 function urlToKey(url)

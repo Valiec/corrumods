@@ -1,5 +1,7 @@
-//testing both formats
-registerCustomPage("/local/uncosm/idril/", "https://valiec.github.io/corrumods/test/hivekoa.html");
+//testing hardcoded page + multiple mods
+const idrilmod = new Mod("idril");
+
+idrilmod.registerCustomPage("/local/uncosm/idril/", "https://valiec.github.io/corrumods/test/hivekoa.html");
 
 let a = `<!DOCTYPE html>
 <html>
@@ -212,4 +214,4 @@ start
 </html>
 `;
 
-registerCustomPageHardcoded("/local/uncosm/telyu/", a);
+idrilmod.registerCustomPageHardcoded("/local/uncosm/telyu/", a);
