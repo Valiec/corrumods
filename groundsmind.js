@@ -7,16 +7,21 @@ if(typeof customPages === 'undefined')
     mods = {}
 }
 
+//library method, check save flag for mod
+//mostly for cross-mod stuff, use the method on the mod object for most cases
 function modCheck(id, inputKey, inputValue = null)
 {
-    return check("grmmod_"+id+"_"+inputKey, inputValue);
+    return check(`grmmod_${id}_${inputKey}`, inputValue);
 }
 
+//library method, change save flag for mod
+//mostly for cross-mod stuff, use the method on the mod object for most cases
 function modChange(id, key, value)
 {
-    return change("grmmod_"+id+"_"+key, value);
+    return change(`grmmod_${id}_${key}`, value);
 }
 
+//mod constructor, call this with the modid
 function Mod(id)
 {
     this.id = id;
@@ -27,16 +32,19 @@ function Mod(id)
     mods[id] = this;
 }
 
+//library method, check save flag for this mod (helper to not have to put in the modid)
 Mod.prototype.check = function(inputKey, inputValue = null)
 {
     return modCheck(this.id, inputKey, inputValue);
 }
 
+//library method, change save flag for this mod (helper to not have to put in the modid)
 Mod.prototype.change = function(key, value)
 {
     return modChange(this.id, key, value);
 }
 
+//library method, register custom page (non-hardcoded) for this mod, errors if another mod already used the URL
 Mod.prototype.registerCustomPage = function(fakeURL, realURL, force=false)
 {
     let pageKey = urlToKey(fakeURL);
@@ -48,6 +56,7 @@ Mod.prototype.registerCustomPage = function(fakeURL, realURL, force=false)
     registerCustomPage(fakeURL, realURL, force);   
 }
 
+//library method, register hardcoded custom page for this mod, errors if another mod already used the URL
 Mod.prototype.registerCustomPageHardcoded = function(fakeURL, pageContent, force=false)
 {
     let pageKey = urlToKey(fakeURL);
