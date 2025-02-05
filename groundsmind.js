@@ -109,9 +109,9 @@ function overrideUncodeMemhole()
 function onload_custompage() {
     //if this has the title of the 404 page, is registered as a custom page key, and is *not* itself the result of visiting a custom page
     //the 3rd condition is to prevent reload loops if a custom page is named !!__ERROR::UNPROCESSABLE__!!
-    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey(pageRec.responseURL) in customPages && !env.visitingCustomPage) //404 and custom page
+    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey( window.location.href) in customPages && !env.visitingCustomPage) //404 and custom page
     {
-        swup.loadPage({url: window.location.href}); //force swup load again to get custom page
+        moveTo(window.location.href, closeMui=false, quick=true); //force load again to get custom page
     }
 }
 
@@ -155,7 +155,7 @@ function overridePageIfNeeded(pageRec)
 }
 
 //overriding moveTo
-function moveTo(destUrl, closeMui = true){
+function moveTo(destUrl, closeMui = true, quick=false){
     if(closeMui) {
         MUI("off")
         MUI("deprohibit")
@@ -177,10 +177,13 @@ function moveTo(destUrl, closeMui = true){
     {
         swup.loadPage({url: destUrl})
     }
-    if(body.classList.contains('in-dialogue')) endDialogue()
+    if(!quick)
+    {
+        if(body.classList.contains('in-dialogue')) endDialogue()
+    }
 }
 
-function moveToCustom(destUrl, fakeUrl){
+function moveToCustom(destUrl, fakeUrl, quick){
     env.visitingCustomPage = true;
     //swup.loadPage({url: destUrl})
     let request = new XMLHttpRequest();
@@ -206,13 +209,13 @@ function moveToCustom(destUrl, fakeUrl){
 }
 
 
-function moveToHardcoded(pageContent, fakeUrl){
+function moveToHardcoded(pageContent, fakeUrl, quick){
     env.visitingCustomPage = true;
     let request = {}
     request.responseURL = fakeUrl; //fake the URL
     request.responseText = customPagesHardcoded[pageKey];
     let pageRec = swup.getPageData(request);
-    fakePageTransition(pageRec, fakeUrl);
+    fakePageTransition(pageRec, fakeUrl, doStatic);
     //history.pushState({}, "", fakeUrl); //override the address bar
     
 }
@@ -222,17 +225,27 @@ const doPageTransition =  function(pageRec, fakeUrl) {
     history.pushState({}, "", fakeUrl); //override the address bar
 };
 
-function fakePageTransition(pageRec, fakeUrl)
+function fakePageTransition(pageRec, fakeUrl, quick)
 {
 
     const transitionCallback = function(event)
     {
         doPageTransition(pageRec, fakeUrl);
-        removeEventListener("transitionend", transitionCallback);
+        if(!quick)
+        {
+            removeEventListener("transitionend", transitionCallback);
+        }
     };
 
     page.onLeaving();
-    addEventListener("transitionend", transitionCallback);
+    if(!quick)
+    {
+        addEventListener("transitionend", transitionCallback);
+    }
+    else
+    {
+        transitionCallback(null);
+    }
 }
 
 function overrideLoad(pageRec, renderOpts)
@@ -245,12 +258,6 @@ function overrideLoad(pageRec, renderOpts)
 
 let doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
-
-
-//testing both formats
-registerCustomPage("https://corru.observer/local/valiec", "/local/ozo?force");
-registerCustomPage("/local/idril", "/local/depths?force");
-registerCustomPage("/local/uncosm/silly/", "https://valiec.github.io/corrumods/debug/hivekoa.html");
 
 
 document.addEventListener('corru_entered', function() {
