@@ -347,5 +347,3 @@ document.addEventListener('corru_entered', function() {
 addEventListener("load", (event) => {
     onloadCustomPage();
 });
-
-

@@ -3,7 +3,7 @@ const idrilmod = new Mod("idril");
 
 idrilmod.registerCustomPage("/local/uncosm/idril/", "https://valiec.github.io/corrumods/test/hivekoa.html");
 
-let a = `<!DOCTYPE html>
+let rawPage = `<!DOCTYPE html>
 <html>
     <head>
         <title>..__UNKNOWN__..</title>  
@@ -214,4 +214,4 @@ start
 </html>
 `;
 
-idrilmod.registerCustomPageHardcoded("/local/uncosm/telyu/", a);
+idrilmod.registerCustomPageHardcoded("/local/uncosm/telyu/", rawPage);
