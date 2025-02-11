@@ -3,7 +3,7 @@ const vekoamod = new Mod("vekoa");
 //testing both formats
 vekoamod.registerCustomPage("https://corru.observer/local/valiec", "/local/ozo");
 vekoamod.registerCustomPage("/local/idril", "/local/depths");
-vekoamod.registerCustomPage("/local/uncosm/hi vekoa/", "https://valiec.github.io/corrumods/test/hivekoa.html");
+vekoamod.registerCustomPage("/local/uncosm/hivekoa/", "https://valiec.github.io/corrumods/test/hivekoa.html");
 vekoamod.registerActor("idril", {
     image: "/img/sprites/obesk/idril/portrait.gif",
     type: "obesk qou portrait-contain",
@@ -41,12 +41,13 @@ start
     RESPONSES::sys
         return<+>END
             EXEC::moveTo("/local/depths/")
-`, forPages=['/local/uncosm/hi vekoa/']);
+`, forPages=['/local/uncosm/hivekoa/']);
 
 
 document.addEventListener('corru_entered', function() {
-    if(new URL(window.location.href).pathname == "/local/uncosm/hi vekoa/")
+    if(urlToKey(window.location.href) == "/local/uncosm/hivekoa")
     {
+    	initCurrentPage();
     	startDialogue("hi-vekoa");
     }
 });

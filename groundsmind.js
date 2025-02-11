@@ -12,6 +12,16 @@ if(typeof customPages === 'undefined')
     globalDialogues = {} //conflict detection
 }
 
+pageInitialized = false;
+
+let oldState = document.body.getAttribute("state");
+//potentially a custom page, hide the enter button
+if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && !env.visitingCustomPage)
+{
+    document.body.classList.add("cutscene");
+    document.body.classList.add("grmHideEnter");
+}
+
 // ===== MOD OBJECT RELATED HELPER FUNCTIONS =====
 
 //library method, check save flag for mod
@@ -315,9 +325,16 @@ function overrideUncodeMemhole()
 function onloadCustomPage() {
     //if this has the title of the 404 page, is registered as a custom page key, and is *not* itself the result of visiting a custom page
     //the 3rd condition is to prevent reload loops if a custom page is named !!__ERROR::UNPROCESSABLE__!!
-    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey(window.location.href) in customPages && !env.visitingCustomPage)
+    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && !env.visitingCustomPage)
     {
-        moveTo(window.location.href, closeMui=false, quick=true); //force load again to get custom page
+        if(urlToKey(window.location.href) in customPages)
+        {
+            moveTo(window.location.href, closeMui=false, quick=true); //force load again to get custom page
+        }
+        else
+        {
+            removeGrmHideEnter();
+        }
     }
 }
 
@@ -327,6 +344,15 @@ function isCrossOrigin(destURL)
     const srcOrigin = new URL(window.location.href).origin;
     const destOrigin = new URL(destURL).origin;
     return srcOrigin != destOrigin;
+}
+
+function removeGrmHideEnter()
+{
+    if(document.body.classList.contains("grmHideEnter"))
+    {
+        document.body.classList.remove("cutscene");
+        document.body.classList.remove("grmHideEnter");
+    }
 }
 
 
@@ -343,22 +369,23 @@ function moveTo(destUrl, closeMui = true, quick=false){
     {
         if(pageKey in customPagesHardcoded)
         {
-            moveToHardcoded(customPagesHardcoded[pageKey], destUrl);
+            moveToHardcoded(customPagesHardcoded[pageKey], destUrl, quick);
         }
         else
         {
-            moveToCustom(customPages[pageKey], destUrl);
+            moveToCustom(customPages[pageKey], destUrl, quick);
         }
     }
     else
     {
         swup.loadPage({url: destUrl})
+        removeGrmHideEnter();
     }
     if(body.classList.contains('in-dialogue')) endDialogue()
 }
 
 //internal, moveTo helper for custom pages at distinct URLs
-function moveToCustom(destUrl, fakeUrl, quick){
+function moveToCustom(destUrl, fakeUrl, quick=false){
     env.visitingCustomPage = true;
     let request = new XMLHttpRequest();
     let pageKey = urlToKey(fakeUrl);
@@ -382,7 +409,7 @@ function moveToCustom(destUrl, fakeUrl, quick){
 
 
 //internal, moveTo helper for custom hardcoded (embedded in the JS) pages
-function moveToHardcoded(pageContent, fakeUrl, quick){
+function moveToHardcoded(pageContent, fakeUrl, quick=false){
     env.visitingCustomPage = true;
     let request = {}
     request.responseURL = fakeUrl; //fake the URL
@@ -396,11 +423,12 @@ function moveToHardcoded(pageContent, fakeUrl, quick){
 const doPageTransition =  function(pageRec, fakeUrl) {
     doRender(pageRec, {});
     history.pushState({}, "", fakeUrl); //override the address bar
+    removeGrmHideEnter();
 };
 
 
 //internal, fakes a page transition without actually invoking swup (to avoid spurious requests)
-function fakePageTransition(pageRec, fakeUrl, quick)
+function fakePageTransition(pageRec, fakeUrl, quick=false)
 {
 
     const transitionCallback = function(event)
@@ -466,15 +494,7 @@ function overrideLoad(pageRec, renderOpts)
   history.pushState({}, "", url); //override the address bar
 }
 
-// ===== SWUP OVERRIDE AND EVENT LISTENERS =====
-
-//override renderPage in swup
-let doRender = swup.renderPage.bind(swup);
-swup.renderPage = overrideLoad.bind(swup);
-
-document.addEventListener('corru_loaded', function() {
-    let pageKey = urlToKey(new URL(window.location.href).pathname);
-
+function loadDataForKey(pageKey){
     Object.keys(globalActors).forEach(function(actor){
         env.dialogueActors[actor] = globalActors[actor]["data"];
     });
@@ -491,11 +511,32 @@ document.addEventListener('corru_loaded', function() {
             env.dialogues[dialogue] = generateDialogueObject(pageData[pageKey]["dialogues"][dialogue]["dialogue"]);
         });
     }
+}
+
+function initCurrentPage()
+{
+    if(!pageInitialized)
+    {
+        let pageKey = urlToKey(new URL(window.location.href).pathname);
+        loadDataForKey(pageKey);
+        pageInitialized = true;
+    }
+}
+
+// ===== SWUP OVERRIDE AND EVENT LISTENERS =====
+
+//override renderPage in swup
+let doRender = swup.renderPage.bind(swup);
+swup.renderPage = overrideLoad.bind(swup);
+
+document.addEventListener('corru_loaded', function() {
+    initCurrentPage();
+
 });
 
 //add uncode replacement handler on memhole textbox focused
 document.addEventListener('corru_entered', function() {
-    if(new URL(window.location.href).pathname == "/local/uncosm/where/") //memhole
+    if(urlToKey(window.location.href) == "/local/uncosm/where") //memhole
     {
         console.log("adding uncode replacement handler");
         let codeElement = document.getElementById('code');
