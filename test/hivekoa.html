@@ -80,24 +80,24 @@
                         updatePreferenceAttributes()
 
 
-env.dialogues["silly"] = generateDialogueObject(`
-start
-    sys
-        NOTICE::'memory stream located'
-
-    sourceless
-        hi vekoa
-
-    sourceless
-        this is working
-
-    sys
-        NOTICE::'memory stream terminated'
-
-    RESPONSES::sys
-        return<+>END
-            EXEC::moveTo("/local/depths/")
-`)
+//env.dialogues["silly"] = generateDialogueObject(`
+//start
+//    sys
+//        NOTICE::'memory stream located'
+//
+//    sourceless
+//        hi vekoa
+//
+//    sourceless
+//        this is working
+//
+//    sys
+//        NOTICE::'memory stream terminated'
+//
+//    RESPONSES::sys
+//        return<+>END
+//            EXEC::moveTo("/local/depths/")
+//`)
 
 
                         
@@ -156,7 +156,7 @@ start
                         //dyn
                         
                         body.classList.add('codezone')
-                        startDialogue("silly")
+                        //startDialogue("silly")
 
                         Buddy.triggerPageBuddies()
                         document.querySelector('#PageData').remove()

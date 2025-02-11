@@ -1,10 +1,129 @@
+// ===== EARLY INIT STUFF =====
+
 //only run this if the arrays don't exist, no need to reset them all the time
 if(typeof customPages === 'undefined')
 {
     customPages = {}
-    customPagesToMods = {}
     customPagesHardcoded = {}
-    mods = {}
+    modData = {}
+    customPageData = {}
+    pageData = {}
+    globalActors = {} //conflict detection
+    globalDialogues = {} //conflict detection
+}
+
+// ===== MOD OBJECT RELATED HELPER FUNCTIONS =====
+
+//library method, check save flag for mod
+//mostly for cross-mod stuff, use the method on the mod object for most cases
+
+function modError(id, msg)
+{
+    printError(`mod error [${id}]: ${msg}`);
+}
+
+function modWarn(id, msg)
+{
+    console.warn(`warning [${id}]: ${msg}`);
+}
+
+function modInfo(id, msg)
+{
+    console.log(`info [${id}]: ${msg}`);
+}
+
+function ensurePageDataObject(pageName)
+{
+    if(!(page in pageData))
+    {
+        pageData[page] = {"actors": {}, "dialogues": {}};
+    }
+}
+
+function checkNotExists(name, obj, force=false)
+{
+    return !(name in obj) || force;
+}
+
+function modRegisterActor(id, name, data, isGlobal=false, forPages=[], force=false)
+{
+    if(isGlobal && forPages.length > 0) //tried to add a page list for a global actor
+    {
+        modError(id, `invalid combination of global actor and page list`);
+    }
+    else if(isGlobal) //global
+    {
+        if(checkNotExists(name, globalActors, force)) {
+            globalActors[name] = {"id": id, "data": data}
+        }
+        else
+        {
+            if(globalActors[name]["id"] != id)
+            {
+                modError(id, `global actor ${name} already registered for mod ${globalActors[name]["id"]}`);
+            }
+            //if same id, just do nothing
+        }
+    }
+    else //per-page
+    {
+
+        forPages.forEach(function(page) {
+            let pageKey = urlToKey(page);
+            ensurePageDataObject(pageKey);
+            if (!checkNotExists(name, pageData[pageKey]["actors"], force)){
+                pageData[pageKey]["actors"][name] = {"id": id, "data": data};
+            }
+            else
+            {
+                if(pageData[pageKey]["actors"][name]["id"] != id)
+                {
+                    modError(id, `actor ${name} already registered for mod ${pageData[pageKey]["actors"][name]["id"]} on page ${pageKey}`);
+                }
+                //if same id, just do nothing
+            }
+        });
+    }
+}
+
+function modRegisterDialogue(id, name, dialogue, isGlobal=false, forPages=[], force=false)
+{
+    if(isGlobal && forPages.length > 0) //tried to add a page list for a global dialogue
+    {
+        modError(id, `invalid combination of global dialogue and page list`);
+    }
+    else if(isGlobal) //global
+    {
+        if(checkNotExists(name, globalDialogues, force)) {
+            globalDialogues[name] = {"id": id, "dialogue": dialogue}
+        }
+        else
+        {
+            if(globalDialogues[name]["id"] != id)
+            {
+                modError(id, `global dialogue ${name} already registered for mod ${globalDialogues[name]["id"]}`);
+            }
+            //if same id, just do nothing
+        }
+    }
+    else //per-page
+    {
+        forPages.forEach(function(page) {
+            let pageKey = urlToKey(page);
+            ensurePageDataObject(pageKey);
+            if (!checkNotExists(name, pageData[pageKey]["dialogues"], force)){
+                pageData[pageKey]["dialogues"][name] = {"id": id, "dialogue": dialogue};
+            }
+            else
+            {
+                if(pageData[pageKey]["dialogues"][name]["id"] != id)
+                {
+                    modError(id, `dialogue ${name} already registered for mod ${pageData[pageKey]["dialogues"][name]["id"]} on page ${pageKey}`);
+                }
+                //if same id, just do nothing
+            }
+        });
+    }
 }
 
 //library method, check save flag for mod
@@ -14,6 +133,7 @@ function modCheck(id, inputKey, inputValue = null)
     return check(`grmmod_${id}_${inputKey}`, inputValue);
 }
 
+
 //library method, change save flag for mod
 //mostly for cross-mod stuff, use the method on the mod object for most cases
 function modChange(id, key, value)
@@ -21,15 +141,17 @@ function modChange(id, key, value)
     return change(`grmmod_${id}_${key}`, value);
 }
 
+// ===== MOD OBJECT AND PROTOTYPE METHODS =====
+
 //mod constructor, call this with the modid
 function Mod(id)
 {
     this.id = id;
-    if(id in mods)
+    if(id in modData)
     {
         printError("mod already registered with id '"+id+"'!");
     }
-    mods[id] = this;
+    modData[id] = {"obj": this, "customPages":[]};
 }
 
 //library method, check save flag for this mod (helper to not have to put in the modid)
@@ -48,11 +170,11 @@ Mod.prototype.change = function(key, value)
 Mod.prototype.registerCustomPage = function(fakeURL, realURL, force=false)
 {
     let pageKey = urlToKey(fakeURL);
-    if(pageKey in customPagesToMods && customPagesToMods[pageKey] != this.id)
+    if(pageKey in customPageData && customPageData[pageKey]["modid"] != this.id)
     {
-        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`);
+        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPageData[pageKey]}'`);
     }
-    customPagesToMods[pageKey] = this.id;
+    customPageData[pageKey] = {"modid": this.id};
     registerCustomPage(fakeURL, realURL, force);   
 }
 
@@ -60,13 +182,27 @@ Mod.prototype.registerCustomPage = function(fakeURL, realURL, force=false)
 Mod.prototype.registerCustomPageHardcoded = function(fakeURL, pageContent, force=false)
 {
     let pageKey = urlToKey(fakeURL);
-    if(pageKey in customPagesToMods && customPagesToMods[pageKey] != this.id)
+    if(pageKey in customPageData && customPageData[pageKey]["modid"] != this.id)
     {
-        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPagesToMods[pageKey]}'`);
+        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPageData[pageKey]}'`);
     }
-    customPagesToMods[pageKey] = this.id;
+    customPageData[pageKey] = {"modid": this.id};
     registerCustomPageHardcoded(fakeURL, pageContent, force);   
 }
+
+//library method, register dialogue actor
+Mod.prototype.registerActor = function(name, data, isGlobal=false, forPages=[], force=false)
+{
+    return modRegisterActor(this.id, name, data, isGlobal, forPages, force);
+}
+
+//library method, register dialogue
+Mod.prototype.registerDialogue = function(name, dialogue, isGlobal=false, forPages=[], force=false)
+{
+    return modRegisterDialogue(this.id, name, dialogue, isGlobal, forPages, force);
+}
+
+// ===== REGISTRATION HELPER FUNCTIONS =====
 
 //internal, converts a URL to a page key (relative path)
 function urlToKey(url)
@@ -111,6 +247,8 @@ function keyToUrl(key)
     return new URL(window.location.href).origin+key;
 }
 
+// ===== REGISTRATION LIBRARY FUNCTIONS =====
+
 //library method, registers a custom page
 //if fakeURL already registered, do nothing unless force=true
 function registerCustomPage(fakeURL, realURL, force=false)
@@ -132,6 +270,7 @@ function registerCustomPageHardcoded(fakeURL, pageContent, force=false)
     customPagesHardcoded[key] = pageContent;
 }
 
+// ===== INTERNAL HELPER FUNCTIONS =====
 
 //internal, overrides env.uncode on the memhole to recognize new codes
 function overrideUncodeMemhole()
@@ -176,7 +315,7 @@ function overrideUncodeMemhole()
 function onloadCustomPage() {
     //if this has the title of the 404 page, is registered as a custom page key, and is *not* itself the result of visiting a custom page
     //the 3rd condition is to prevent reload loops if a custom page is named !!__ERROR::UNPROCESSABLE__!!
-    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey(window.location.href) in customPages && !env.visitingCustomPage) //404 and custom page
+    if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && urlToKey(window.location.href) in customPages && !env.visitingCustomPage)
     {
         moveTo(window.location.href, closeMui=false, quick=true); //force load again to get custom page
     }
@@ -327,11 +466,32 @@ function overrideLoad(pageRec, renderOpts)
   history.pushState({}, "", url); //override the address bar
 }
 
+// ===== SWUP OVERRIDE AND EVENT LISTENERS =====
 
 //override renderPage in swup
 let doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
 
+document.addEventListener('corru_loaded', function() {
+    let pageKey = urlToKey(new URL(window.location.href).pathname);
+
+    Object.keys(globalActors).forEach(function(actor){
+        env.dialogueActors[actor] = globalActors[actor]["data"];
+    });
+    Object.keys(globalDialogues).forEach(function(dialogue){
+        env.dialogues[dialogue] = generateDialogueObject(globalDialogues[dialogue]["dialogue"]);
+    });
+
+    if(pageKey in pageData)
+    {
+        Object.keys(pageData[pageKey]["actors"]).forEach(function(actor){
+            env.dialogueActors[actor] = pageData[pageKey]["actors"][actor]["data"];
+        });
+        Object.keys(pageData[pageKey]["dialogues"]).forEach(function(dialogue){
+            env.dialogues[dialogue] = generateDialogueObject(pageData[pageKey]["dialogues"][dialogue]["dialogue"]);
+        });
+    }
+});
 
 //add uncode replacement handler on memhole textbox focused
 document.addEventListener('corru_entered', function() {
