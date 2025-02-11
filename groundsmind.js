@@ -306,6 +306,7 @@ function overrideUncodeMemhole()
                     let uncosmPath = `/local/uncosm/${value}/`;
                     let fetchPath = uncosmPath;
                     let pageKey = urlToKey(uncosmPath);
+                    let hardcoded = false;
                     if(pageKey in customPages)
                     {
                         if(customPages[pageKey]["hardcoded"])
@@ -314,13 +315,15 @@ function overrideUncodeMemhole()
                                 cutscene(false);
                                 moveTo(uncosmPath);
                             }, 4000);
+                            hardcoded = true;
                         }
                         else
                         {
                             fetchPath = customPages[pageKey]["url"]; //override the page
                         }
                     }
-                    else
+
+                    if(!hardcoded)
                     {
                         fetch(fetchPath).then(resp=>{
                             if(resp.status == 404){
