@@ -517,7 +517,7 @@ function initCurrentPage()
 {
     if(!pageInitialized)
     {
-        let pageKey = urlToKey(new URL(window.location.href).pathname);
+        let pageKey = urlToKey(window.location.href);
         loadDataForKey(pageKey);
         pageInitialized = true;
     }
