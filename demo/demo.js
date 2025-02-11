@@ -84,37 +84,18 @@ start
 
     cavik
         groundsmind.js a work-in-progress modding library for corru.observer
-        in its current state, it allows for adding custom pages, 
-        either fetched from a remote URL or hardcoded into the mod JS,
+        in its current state, it allows for adding custom pages
+        either fetched from a remote URL or hardcoded into the mod JS
         as well as registration of actors and dialogue on a page from JS
-
-    cavik
-        it is also capable of detecting some types of mod conflicts involving
-        mods using groundsmind.js
-
-    cavik
-        this memory stream is demonstrating the library's functionality by
-        adding a new page to the game
-
-    cavik
-        the page content is fetched from a remote URL, and the game is redirected
-        there upon attempting to visit the page or use the memory hole code 'hi vekoa'
-
-    cavik
-        requests to the actual corru.observer site for custom pages should only occur
-        when directly entering the URL in your browser, when moving from another page
-        the use of the custom URL is detected and redirected without hitting the actual site
-
-    cavik
-        in addition, these actors and dialogue entries are added from the mod's javascript
-        instead of the remote HTML file
-
-    cavik
+        it is also capable of detecting some types of mod conflicts involving mods using groundsmind.js
+        this memory stream is demonstrating the library's functionality by adding a new page to the game
+        the page content is fetched from a remote URL
+        and the game is redirected there upon attempting to visit the page or use the memory hole code 'hi vekoa'
+        requests to the actual corru.observer site for custom pages should only occur when directly entering the URL in your browser
+        when moving from another page the use of the custom URL is detected and redirected without hitting the actual site
+        in addition these actors and dialogue entries are added from the mod's javascript instead of the remote HTML file
         examine the source code of groundsmind.js and demo.js for further information
-
-    cavik
-        be aware that groundsmind.js is currently in early alpha
-        and much is still subject to change at any time
+        be aware that groundsmind.js is currently in early alpha and much is still subject to change at any time
 
     sys
         NOTICE::'memory stream terminated'
