@@ -353,6 +353,7 @@ function removeGrmHideEnter()
 //internal, overriding moveTo to handle custom pages
 //quick is intended for skipping as much of the page transition as possible for the onload redirect
 function moveTo(destUrl, closeMui = true, quick=false){
+    pageInitialized = false;
     if(closeMui) {
         MUI("off")
         MUI("deprohibit")
