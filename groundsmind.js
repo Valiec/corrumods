@@ -1,3 +1,9 @@
+// ===== GROUNDSMIND.JS LIBRARY =====
+
+//groundsmind.js a WIP corru modding library
+//it currently supports adding custom pages, either from URLs or hardcoded
+//plus registration of actors and dialogue on a page from JS
+
 // ===== EARLY INIT STUFF =====
 
 customPages = {}
