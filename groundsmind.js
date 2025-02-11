@@ -1,20 +1,16 @@
 // ===== EARLY INIT STUFF =====
 
-//only run this if the arrays don't exist, no need to reset them all the time
-if(typeof customPages === 'undefined')
-{
-    customPages = {}
-    customPagesHardcoded = {}
-    modData = {}
-    customPageData = {}
-    pageData = {}
-    globalActors = {} //conflict detection
-    globalDialogues = {} //conflict detection
-}
+customPages = {}
+customPagesHardcoded = {}
+modData = {}
+customPageData = {}
+pageData = {}
+globalActors = {} //conflict detection
+globalDialogues = {} //conflict detection
 
 pageInitialized = false;
 
-let oldState = document.body.getAttribute("state");
+oldState = document.body.getAttribute("state");
 //potentially a custom page, hide the enter button
 if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && !env.visitingCustomPage)
 {
@@ -44,26 +40,22 @@ function modInfo(id, msg)
 
 function ensurePageDataObject(pageName)
 {
-    if(!(page in pageData))
+    if(!(pageName in pageData))
     {
-        pageData[page] = {"actors": {}, "dialogues": {}};
+        pageData[pageName] = {"actors": {}, "dialogues": {}};
     }
 }
 
-function checkNotExists(name, obj, force=false)
+function checkExists(name, obj, force=false)
 {
-    return !(name in obj) || force;
+    return (name in obj) && !force;
 }
 
-function modRegisterActor(id, name, data, isGlobal=false, forPages=[], force=false)
+function modRegisterActor(id, name, data, forPages="global", force=false)
 {
-    if(isGlobal && forPages.length > 0) //tried to add a page list for a global actor
+    if(forPages == "global") //global
     {
-        modError(id, `invalid combination of global actor and page list`);
-    }
-    else if(isGlobal) //global
-    {
-        if(checkNotExists(name, globalActors, force)) {
+        if(!checkExists(name, globalActors, force)) {
             globalActors[name] = {"id": id, "data": data}
         }
         else
@@ -81,7 +73,7 @@ function modRegisterActor(id, name, data, isGlobal=false, forPages=[], force=fal
         forPages.forEach(function(page) {
             let pageKey = urlToKey(page);
             ensurePageDataObject(pageKey);
-            if (!checkNotExists(name, pageData[pageKey]["actors"], force)){
+            if (!checkExists(name, pageData[pageKey]["actors"], force)){
                 pageData[pageKey]["actors"][name] = {"id": id, "data": data};
             }
             else
@@ -96,15 +88,11 @@ function modRegisterActor(id, name, data, isGlobal=false, forPages=[], force=fal
     }
 }
 
-function modRegisterDialogue(id, name, dialogue, isGlobal=false, forPages=[], force=false)
+function modRegisterDialogue(id, name, dialogue, forPages=[], force=false)
 {
-    if(isGlobal && forPages.length > 0) //tried to add a page list for a global dialogue
+    if(forPages == "global") //global
     {
-        modError(id, `invalid combination of global dialogue and page list`);
-    }
-    else if(isGlobal) //global
-    {
-        if(checkNotExists(name, globalDialogues, force)) {
+        if(!checkExists(name, globalDialogues, force)) {
             globalDialogues[name] = {"id": id, "dialogue": dialogue}
         }
         else
@@ -121,7 +109,7 @@ function modRegisterDialogue(id, name, dialogue, isGlobal=false, forPages=[], fo
         forPages.forEach(function(page) {
             let pageKey = urlToKey(page);
             ensurePageDataObject(pageKey);
-            if (!checkNotExists(name, pageData[pageKey]["dialogues"], force)){
+            if (!checkExists(name, pageData[pageKey]["dialogues"], force)){
                 pageData[pageKey]["dialogues"][name] = {"id": id, "dialogue": dialogue};
             }
             else
@@ -201,22 +189,27 @@ Mod.prototype.registerCustomPageHardcoded = function(fakeURL, pageContent, force
 }
 
 //library method, register dialogue actor
-Mod.prototype.registerActor = function(name, data, isGlobal=false, forPages=[], force=false)
+Mod.prototype.registerActor = function(name, data, forPages="global", force=false)
 {
-    return modRegisterActor(this.id, name, data, isGlobal, forPages, force);
+    return modRegisterActor(this.id, name, data, forPages, force);
 }
 
 //library method, register dialogue
-Mod.prototype.registerDialogue = function(name, dialogue, isGlobal=false, forPages=[], force=false)
+Mod.prototype.registerDialogue = function(name, dialogue, forPages="global", force=false)
 {
-    return modRegisterDialogue(this.id, name, dialogue, isGlobal, forPages, force);
+    return modRegisterDialogue(this.id, name, dialogue, forPages, force);
 }
 
 // ===== REGISTRATION HELPER FUNCTIONS =====
 
 //internal, converts a URL to a page key (relative path)
-function urlToKey(url)
+function urlToKey(urlStr)
 {
+    let url = urlStr;
+    if(decodeURI(urlStr) == urlStr)
+    {
+        url = encodeURI(urlStr);
+    }
 
     if(url.includes("?")) //if there are params (e.g. "?force")
     {
@@ -346,6 +339,7 @@ function isCrossOrigin(destURL)
     return srcOrigin != destOrigin;
 }
 
+//internal, removes the cutscene class used to hide the enter button
 function removeGrmHideEnter()
 {
     if(document.body.classList.contains("grmHideEnter"))
@@ -420,7 +414,7 @@ function moveToHardcoded(pageContent, fakeUrl, quick=false){
 }
 
 //internal, helper for fakePageTransition
-const doPageTransition =  function(pageRec, fakeUrl) {
+doPageTransition =  function(pageRec, fakeUrl) {
     doRender(pageRec, {});
     history.pushState({}, "", fakeUrl); //override the address bar
     removeGrmHideEnter();
@@ -513,6 +507,7 @@ function loadDataForKey(pageKey){
     }
 }
 
+//library function, initializes mod data for current page
 function initCurrentPage()
 {
     if(!pageInitialized)
@@ -523,6 +518,7 @@ function initCurrentPage()
     }
 }
 
+//library function, checks if the page key or URL passed is the current page
 function isOnPage(pageKeyOrUrl)
 {
     return urlToKey(window.location.href) == urlToKey(pageKeyOrUrl);
@@ -531,7 +527,7 @@ function isOnPage(pageKeyOrUrl)
 // ===== SWUP OVERRIDE AND EVENT LISTENERS =====
 
 //override renderPage in swup
-let doRender = swup.renderPage.bind(swup);
+doRender = swup.renderPage.bind(swup);
 swup.renderPage = overrideLoad.bind(swup);
 
 document.addEventListener('corru_loaded', function() {
