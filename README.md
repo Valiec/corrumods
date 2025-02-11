@@ -13,5 +13,5 @@ It currently supports:
 * Custom pages (both fetched from URLs and hardcoded into the JS)
 * Registering actors and dialogues through JS
 
-Look at the comments in valiec.github.io/corrumods/demo/demo.js for a simple example ("hi vekoa" memory hole entry)
+Look at the comments in https://valiec.github.io/corrumods/demo/demo.js for a simple example ("hi vekoa" memory hole entry)
 
