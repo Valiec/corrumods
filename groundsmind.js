@@ -523,6 +523,11 @@ function initCurrentPage()
     }
 }
 
+function isOnPage(pageKeyOrUrl)
+{
+    return urlToKey(window.location.href) == urlToKey(pageKeyOrUrl);
+}
+
 // ===== SWUP OVERRIDE AND EVENT LISTENERS =====
 
 //override renderPage in swup
@@ -531,12 +536,11 @@ swup.renderPage = overrideLoad.bind(swup);
 
 document.addEventListener('corru_loaded', function() {
     initCurrentPage();
-
 });
 
 //add uncode replacement handler on memhole textbox focused
 document.addEventListener('corru_entered', function() {
-    if(urlToKey(window.location.href) == "/local/uncosm/where") //memhole
+    if(isOnPage("/local/uncosm/where")) //memhole
     {
         console.log("adding uncode replacement handler");
         let codeElement = document.getElementById('code');

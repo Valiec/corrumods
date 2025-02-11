@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- This is only the title, as the rest is still there from the previous page -->
+        <title>..__UNKNOWN__..</title>  
+    </head>
+    <body>
+        <!-- This is only the content div, as nothing else is replaced by moveTo -->
+        <div id="content">
+            <style>
+                #content::after, #content::before {
+                    content: "";
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                }
+
+                #content::after {
+                    background: url(/img/textures/fadeinlonghalf.gif);
+                    background-size: auto 100%;
+                }
+
+                #content::before {
+                    background: url(/img/textures/ccontours.gif);
+                }
+
+                body.in-menu #content {
+                    transform: unset !important;
+                }
+            </style>
+            <!-- pageData script based on other memory hole pages -->
+            <script id="PageData">
+                content = document.querySelector('#content')
+                body = document.body
+
+                if(typeof page == "object") {
+                    oldPage = page
+                }
+
+                page = {
+                    title: "..__UNKNOWN__..",
+                    name: "unknown",
+                    dialoguePrefix:  "sec" ,
+                    path: location.pathname,
+                    flags: {},
+                    howls: [],
+                    cacheval: 1720995877429489500,
+
+                    
+                    image: "/img/socials/where.gif",
+                    
+
+                    
+
+                    
+                    bgm: new Howl({
+                        onload: function () {page.howls.push(this)},
+                        src: ['/audio/hub.ogg'],
+                        preload: true,
+                        loop: true,
+                        
+                         rate: 0.75, 
+                        sprite: {
+                            __default: [50, 153000, true]
+                        }
+                    }),
+                    
+
+                    
+
+                    
+                    
+                    onLoaded: ()=>{ 
+                        document.querySelectorAll('#grid-ref').forEach(e=>e.remove())
+                        body.setAttribute('page', page.name)
+                        content.setAttribute('page', page.name)
+                        document.querySelector('#static .enter').setAttribute('page', page.title)
+                        document.scrollingElement.scrollTop = 0
+                        
+
+                        updatePreferenceAttributes()
+
+                                                
+                        document.querySelector('body').classList.remove('nomoth')
+                        
+
+                        if(firstLoad || env.waitOnLoad) {
+                            if(!env.loading) body.classList.remove("loading") //this is otherwise handled in the loadResources function
+                            body.setAttribute('state', 'corru-loaded')
+                        } else {
+                            page.onEnter()
+                            if(oldPage.bgm) oldPage.bgm.unload() //unloads the old page music to save memory
+                        }
+
+                        // global defs
+                                            
+                        
+                        console.log('rendering buddies!')
+                        Buddy.renderGlobalBuddies()
+                        document.dispatchEvent(env.hooks.corru_loaded)
+                    },
+
+                    onEnter: ()=>{
+                        if(!page.dialoguePrefix.includes("notfound")) {
+                            change(`visited_${location.pathname.replace(/\//g, '')}`, true)
+                        }
+                        
+                        //global VN object update
+                        page.vn = new VN()
+                        window.vnObj = page.vn
+
+                        
+                        readoutAdd({message: `..__NAVIGATING::"${page.name}"__..`, name:"sys", actor: "sys", type: "navigation", show: false, sfx: false})
+                        
+                        
+                        body.setAttribute('state', 'corru-entered')
+                        firstLoad = false
+
+                        
+                        if(corruStatic.playing()) {
+                            corruStatic.fade(corruStatic.volume(), 0, 1000)
+                            setTimeout(()=> corruStatic.stop(), 1001)
+                        }
+                        if(page.bgm) {
+                            page.bgm.volume(0)
+                            page.bgm.play()
+                            page.bgm.fade(0, 1, 1000)
+                            env.bgm = page.bgm
+                        } else {
+                            env.bgm = null
+                        }
+                        
+
+                        //dyn
+                        
+                        body.classList.add('codezone')
+                        //startDialogue("silly")
+
+                        Buddy.triggerPageBuddies()
+                        document.querySelector('#PageData').remove()
+                        document.dispatchEvent(env.hooks.corru_entered)
+                        mothHasUnreadCheck()
+
+                        setTimeout(()=>{
+                            if(oldPage) if(oldPage.howls) oldPage.howls.forEach(howl=>howl.unload())
+                        }, 400)
+                    },
+
+                    onLeaving: (dest = false)=>{
+                        body.setAttribute('state', 'corru-leaving')
+                        MUI("off")
+                        env.waitOnLoad = false
+
+                        if(env.bgm){
+                            let oldbgm = env.bgm
+                            env.bgm = null
+                            if(oldbgm.playing()) {
+                                oldbgm.fade(oldbgm.volume(), 0, 1000)
+                                setTimeout(()=> oldbgm.stop(), 1001)
+                            }
+                        }
+
+                        corruStatic.volume(0)
+                        corruStatic.play()
+                        corruStatic.fade(0, env.corruStaticBaseVol, 1000)
+
+                        //dyn
+                        
+                        body.classList.remove('codezone')
+
+                        change('TEMP!!sat', true)
+                        Buddy.cleanPageBuddies({removeEl: false})
+                        document.dispatchEvent(env.hooks.corru_leaving)
+
+                        if(dest) swup.loadPage({url: dest})
+                        delete page.vn
+                    }
+                }
+
+                
+
+                env.pageName = "unknown";
+                env.pagePath = location.pathname;
+            </script>
+        </div>
+    </body>
+</html>
