@@ -1,12 +1,10 @@
 // ===== EARLY INIT STUFF =====
 
 customPages = {}
-customPagesHardcoded = {}
 modData = {}
-customPageData = {}
 pageData = {}
-globalActors = {} //conflict detection
-globalDialogues = {} //conflict detection
+globalActors = {}
+globalDialogues = {}
 
 pageInitialized = false;
 
@@ -23,34 +21,42 @@ if(document.title == "!!__ERROR::UNPROCESSABLE__!!" && !env.visitingCustomPage)
 //library method, check save flag for mod
 //mostly for cross-mod stuff, use the method on the mod object for most cases
 
+//error logging
 function modError(id, msg)
 {
     printError(`mod error [${id}]: ${msg}`);
 }
 
+//warnings
 function modWarn(id, msg)
 {
     console.warn(`warning [${id}]: ${msg}`);
 }
 
+//info-level logging
 function modInfo(id, msg)
 {
     console.log(`info [${id}]: ${msg}`);
 }
 
-function ensurePageDataObject(pageName)
+//internal, create pageData[pageKey] if it doesn't exist
+function ensurePageDataObject(pageKey)
 {
-    if(!(pageName in pageData))
+    if(!(pageKey in pageData))
     {
-        pageData[pageName] = {"actors": {}, "dialogues": {}};
+        pageData[pageKey] = {"actors": {}, "dialogues": {}};
     }
 }
 
+//check if this object is in this list, unless force is true
+//just here to avoid repeated code as this happens a lot
 function checkExists(name, obj, force=false)
 {
     return (name in obj) && !force;
 }
 
+//library method, register dialogue actor for mod
+//mostly for cross-mod stuff, use the method on the mod object for most cases
 function modRegisterActor(id, name, data, forPages="global", force=false)
 {
     if(forPages == "global") //global
@@ -88,6 +94,8 @@ function modRegisterActor(id, name, data, forPages="global", force=false)
     }
 }
 
+//library method, register dialogue for mod
+//mostly for cross-mod stuff, use the method on the mod object for most cases
 function modRegisterDialogue(id, name, dialogue, forPages=[], force=false)
 {
     if(forPages == "global") //global
@@ -168,33 +176,31 @@ Mod.prototype.change = function(key, value)
 Mod.prototype.registerCustomPage = function(fakeURL, realURL, force=false)
 {
     let pageKey = urlToKey(fakeURL);
-    if(pageKey in customPageData && customPageData[pageKey]["modid"] != this.id)
+    if(pageKey in customPages && customPages[pageKey]["modid"] != this.id)
     {
-        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPageData[pageKey]}'`);
+        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPage[pageKey]["modid"]}'`);
     }
-    customPageData[pageKey] = {"modid": this.id};
-    registerCustomPage(fakeURL, realURL, force);   
+    registerCustomPage(this.id, fakeURL, realURL, force);   
 }
 
 //library method, register hardcoded custom page for this mod, errors if another mod already used the URL
 Mod.prototype.registerCustomPageHardcoded = function(fakeURL, pageContent, force=false)
 {
     let pageKey = urlToKey(fakeURL);
-    if(pageKey in customPageData && customPageData[pageKey]["modid"] != this.id)
+    if(pageKey in customPages && customPages[pageKey]["modid"] != this.id)
     {
-        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPageData[pageKey]}'`);
+        printError(`mod conflict [${this.id}]: page '${pageKey}' already registered for mod '${customPage[pageKey]["modid"]}'`);
     }
-    customPageData[pageKey] = {"modid": this.id};
-    registerCustomPageHardcoded(fakeURL, pageContent, force);   
+    registerCustomPageHardcoded(this.id, fakeURL, pageContent, force);   
 }
 
-//library method, register dialogue actor
+//library method, register dialogue actor for this mod
 Mod.prototype.registerActor = function(name, data, forPages="global", force=false)
 {
     return modRegisterActor(this.id, name, data, forPages, force);
 }
 
-//library method, register dialogue
+//library method, register dialogue for this mod
 Mod.prototype.registerDialogue = function(name, dialogue, forPages="global", force=false)
 {
     return modRegisterDialogue(this.id, name, dialogue, forPages, force);
@@ -254,23 +260,27 @@ function keyToUrl(key)
 
 //library method, registers a custom page
 //if fakeURL already registered, do nothing unless force=true
-function registerCustomPage(fakeURL, realURL, force=false)
+function registerCustomPage(id, fakeURL, realURL, force=false)
 {
     let key = urlToKey(fakeURL);
 
     if(force || !(key in customPages))
     {
-        customPages[key] = realURL;
+        customPages[key] = {"modid": id, "hardcoded": false, "url": realURL};
     }
     return key;
 }
 
 //library method, registers a hardcoded custom page (i.e. the page content is in the mod, not a separate file)
 //if fakeURL already registered, do nothing unless force=true
-function registerCustomPageHardcoded(fakeURL, pageContent, force=false)
+function registerCustomPageHardcoded(id, fakeURL, pageContent, force=false)
 {
-    let key = registerCustomPage(fakeURL, "", force); //mapping to empty string = flag for hardcoded page
-    customPagesHardcoded[key] = pageContent;
+    let key = urlToKey(fakeURL);
+
+    if(force || !(key in customPages))
+    {
+        customPages[key] = {"modid": id, "hardcoded": true, "hardcodedContent": pageContent};
+    }
 }
 
 // ===== INTERNAL HELPER FUNCTIONS =====
@@ -279,37 +289,51 @@ function registerCustomPageHardcoded(fakeURL, pageContent, force=false)
 function overrideUncodeMemhole()
 {
         env.uncode["enter"] = ()=>{
-                let value = env.uncode.input.value.toLowerCase().replaceAll(".", "").replaceAll("/", "")
+                let value = env.uncode.input.value.toLowerCase().replaceAll(".", "").replaceAll("/", "");
                 
                 if(value.length) {
-                    env.uncode.input.blur()
-                    cutscene(true)
-                    play('destabilize', 0.5)
-                    ratween(env.bgm, 0.1)
-                    content.classList.add('memorydive')
+                    env.uncode.input.blur();
+                    cutscene(true);
+                    play('destabilize', 0.5);
+                    ratween(env.bgm, 0.1);
+                    content.classList.add('memorydive');
         
                     if(!check("hub__funfriend-ah1") && value == "recosm") {
                         //maintain this easter egg
-                        location.href = `/img/sprites/obesk/larval/larval7.gif`
+                        location.href = `/img/sprites/obesk/larval/larval7.gif`;
                     }
 
                     let uncosmPath = `/local/uncosm/${value}/`;
                     let fetchPath = uncosmPath;
-                    if(urlToKey(uncosmPath) in customPages)
+                    let pageKey = urlToKey(uncosmPath);
+                    if(pageKey in customPages)
                     {
-                        fetchPath = customPages[urlToKey(uncosmPath)]; //override the page
-                    }
-                    fetch(fetchPath).then(resp=>{
-                        if(resp.status == 404){
-                            cutscene(false)
-                            startDialogue('wrong')
-                        } else {
+                        if(customPages[pageKey]["hardcoded"])
+                        {
                             setTimeout(()=>{
-                                cutscene(false)
-                                moveTo(uncosmPath) //use the original path
-                            }, 4000)
+                                cutscene(false);
+                                moveTo(uncosmPath);
+                            }, 4000);
                         }
-                    })
+                        else
+                        {
+                            fetchPath = customPages[pageKey]["url"]; //override the page
+                        }
+                    }
+                    else
+                    {
+                        fetch(fetchPath).then(resp=>{
+                            if(resp.status == 404){
+                                cutscene(false);
+                                startDialogue('wrong');
+                            } else {
+                                setTimeout(()=>{
+                                    cutscene(false);
+                                    moveTo(uncosmPath); //use the original path
+                                }, 4000);
+                            }
+                        });
+                    }
                 }
             }
 }
@@ -362,13 +386,13 @@ function moveTo(destUrl, closeMui = true, quick=false){
     const pageKey = urlToKey(destUrl);
     if(pageKey in customPages)
     {
-        if(pageKey in customPagesHardcoded)
+        if(customPages[pageKey]["hardcoded"])
         {
-            moveToHardcoded(customPagesHardcoded[pageKey], destUrl, quick);
+            moveToHardcoded(customPages[pageKey]["hardcodedContent"], destUrl, quick);
         }
         else
         {
-            moveToCustom(customPages[pageKey], destUrl, quick);
+            moveToCustom(customPages[pageKey]["url"], destUrl, quick);
         }
     }
     else
@@ -454,14 +478,14 @@ function overridePageIfNeeded(pageRec)
     env.visitingCustomPage = true;
     let request = new XMLHttpRequest();
     let pageKey = urlToKey(pageRec.responseURL);
-    if(customPages[pageKey] == "" && pageKey in customPagesHardcoded)
+    if(customPages[pageKey]["hardcoded"])
     {
-        request.responseText = customPagesHardcoded[pageKey];
+        request.responseText = customPages[pageKey]["hardcodedContent"];
     }
     else
     {
-        request.open("get",customPages[pageKey], false); //synchronous request for now
-        if(isCrossOrigin(customPages[pageKey]))
+        request.open("get",customPages[pageKey]["url"], false); //synchronous request for now
+        if(isCrossOrigin(customPages[pageKey]["url"]))
         {
             request.setRequestHeader("Content-Type", "text/plain"); //make this a "simple request" to stop CORS preflight
         }
